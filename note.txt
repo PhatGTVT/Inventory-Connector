@@ -1,0 +1,4 @@
+Công nghệ sử dung: 
+1.WebDevelopement: HTML/CSS/JS
+2.Backend: Python
+3.Database:  MySQL

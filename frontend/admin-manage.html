@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Kho Connector | Admin — Connector Inventory</title>
+  <meta name="description" content="Thêm, sửa, xóa và quản lý thông số kỹ thuật linh kiện connector trong kho." />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="/css/base.css?v=2.2" />
+  <link rel="stylesheet" href="/css/layout.css?v=2.2" />
+  <link rel="stylesheet" href="/css/components.css?v=2.2" />
+  <style>
+    .top-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem; }
+    .form-group { margin-bottom:1rem; }
+    .form-group label { display:block; font-size:0.85rem; font-weight:600; color:var(--text-main); margin-bottom:0.4rem; }
+    .form-input { width:100%; background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-main); padding:0.55rem 0.85rem; border-radius:var(--radius-sm); outline:none; transition:var(--transition); resize:vertical; }
+    .form-input:focus { border-color:var(--accent-primary); box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
+    .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0 1rem; }
+    @media (max-width:600px) { .form-grid-2 { grid-template-columns:1fr; } }
+    .attrs-box { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem; margin-top:0.5rem; max-height:260px; overflow-y:auto; }
+    .spinner { width:36px;height:36px;border:3px solid rgba(59,130,246,0.2);border-top-color:var(--accent-primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .connector-form-modal .modal-content { max-width: 720px; max-height: 90vh; overflow-y: auto; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-content">
+    <a href="/" class="brand-logo">
+      <div class="logo-icon"><img src="/assets/logo.svg" alt="Connector Logo" onerror="this.outerHTML='<i class=\'bi bi-plug-fill\'></i>'" /></div>
+      <span>Connector</span>
+      <span class="brand-badge">Admin</span>
+    </a>
+    <div style="display:flex;gap:0.75rem;align-items:center">
+      <a href="/" class="btn btn-secondary btn-sm"><i class="bi bi-house"></i> Catalog</a>
+      <a href="/admin-library" class="btn btn-secondary btn-sm"><i class="bi bi-collection"></i> Thư viện</a>
+      <a href="/admin-manage" class="btn btn-primary btn-sm"><i class="bi bi-gear"></i> Quản lý Kho</a>
+      <a href="/admin-approval" class="btn btn-secondary btn-sm"><i class="bi bi-clipboard-check"></i> Duyệt Yêu Cầu</a>
+      <a href="/admin-users" class="btn btn-secondary btn-sm"><i class="bi bi-people"></i> Người Dùng</a>
+    </div>
+    <div class="nav-actions">
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="Đổi chế độ Sáng / Tối" style="padding:0.35rem 0.65rem;border-radius:var(--radius-full);display:flex;align-items:center;gap:0.35rem">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+      </button>
+
+      <div id="nav-login-section" style="display:flex;gap:0.5rem">
+        <button class="btn btn-outline btn-sm" id="open-login-btn"><i class="bi bi-person"></i> Đăng nhập</button>
+      </div>
+      <div id="nav-user-section" class="user-profile-badge" style="display:none">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info">
+          <span class="name" id="user-fullname">Admin</span>
+          <span class="role-tag" id="user-role-tag">Admin</span>
+        </div>
+        <button id="logout-btn" class="btn btn-sm" style="background:transparent;color:var(--text-dim);font-size:0.9rem;padding:0.2rem 0.4rem" title="Đăng xuất">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="app-container">
+  <div style="margin-bottom:1.75rem">
+    <h1 style="font-size:1.75rem;display:flex;align-items:center;gap:0.75rem">
+      <i class="bi bi-boxes" style="color:var(--accent-primary)"></i>
+      Quản Lý Kho Connector
+    </h1>
+    <p style="color:var(--text-muted);margin-top:0.4rem">Thêm, chỉnh sửa, cập nhật tồn kho và xóa linh kiện connector trong hệ thống.</p>
+  </div>
+
+  <!-- Top Controls -->
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+      <button class="btn btn-primary" id="btn-add-from-lib">
+        <i class="bi bi-box-arrow-in-down"></i> + Thêm từ Thư viện
+      </button>
+      <button class="btn btn-secondary btn-sm" id="btn-add-connector" title="Nhập thủ công nếu muốn tạo riêng">
+        <i class="bi bi-pencil-square"></i> Nhập thủ công
+      </button>
+      <a href="/admin-library" class="btn btn-secondary btn-sm">
+        <i class="bi bi-collection"></i> Mở Thư viện
+      </a>
+      <span id="manage-count" style="font-size:0.9rem;color:var(--text-muted);margin-left:0.5rem">— linh kiện</span>
+    </div>
+    <div class="search-bar" style="max-width:340px;border-radius:var(--radius-md)">
+      <i class="bi bi-search search-icon"></i>
+      <input type="text" id="manage-search" placeholder="Tìm theo MPN, nhà sản xuất, vị trí..." style="padding:0.3rem 0.5rem" />
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Hình</th>
+          <th>Mã linh kiện</th>
+          <th>Nhà sản xuất</th>
+          <th>Vị trí kệ</th>
+          <th style="text-align:center">Tồn kho</th>
+          <th>Danh mục</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody id="manage-tbody">
+        <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted)"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal-content" style="max-width:400px">
+    <div class="modal-header">
+      <h3>Đăng Nhập Admin</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="login-form">
+        <div class="filter-group">
+          <label class="filter-label">Tên đăng nhập</label>
+          <input type="text" id="login-username" class="filter-select" placeholder="admin" required autocomplete="username" />
+        </div>
+        <div class="filter-group" style="margin-top:1rem">
+          <label class="filter-label">Mật khẩu</label>
+          <input type="password" id="login-password" class="filter-select" placeholder="admin123" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:1.5rem;padding:0.7rem">Đăng nhập</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Connector CRUD Modal -->
+<div class="modal-overlay connector-form-modal" id="connector-form-modal">
+  <div class="modal-content" style="max-width:720px">
+    <div class="modal-header">
+      <h3 id="form-title"><i class="bi bi-plug"></i> Thêm Connector Mới</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="connector-form">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Mã nhà sản xuất (MPN) *</label>
+            <input type="text" id="form-mpn" class="form-input" placeholder="APC06-12-12S REV.II" required />
+          </div>
+          <div class="form-group">
+            <label>DigiKey Part Number</label>
+            <input type="text" id="form-digikey-pn" class="form-input" placeholder="965-APC06-12-12SREV.II-ND" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nhà sản xuất (Manufacturer) *</label>
+          <input type="text" id="form-manufacturer" class="form-input" placeholder="Amphenol Industrial Operations" required />
+        </div>
+        <div class="form-group">
+          <label>Mô tả ngắn (Description) *</label>
+          <input type="text" id="form-desc" class="form-input" placeholder="PLUG 12-12 SOCKET REV.II" required />
+        </div>
+        <div class="form-group">
+          <label>Mô tả chi tiết</label>
+          <textarea id="form-detail-desc" class="form-input" rows="2" placeholder="12 Position Circular Connector Plug Housing Free Hanging..."></textarea>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Manufacturer Lead Time</label>
+            <input type="text" id="form-lead-time" class="form-input" placeholder="6 Weeks" />
+          </div>
+          <div class="form-group">
+            <label>Danh mục</label>
+            <select id="form-category" class="form-input">
+              <option value="">-- Không chọn --</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Tồn kho hiện tại</label>
+            <input type="number" id="form-stock" class="form-input" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Ngưỡng cảnh báo tồn kho tối thiểu</label>
+            <input type="number" id="form-min-stock" class="form-input" min="0" value="5" />
+          </div>
+        </div>
+        <!-- Image Upload Section -->
+        <div class="form-group">
+          <label>Hình ảnh Connector (Kéo thả, chọn tệp từ máy hoặc dán URL)</label>
+          <div class="image-dropzone" id="image-dropzone">
+            <input type="file" id="form-image-file" accept="image/png, image/jpeg, image/webp, image/gif" style="display:none" />
+            <div class="dropzone-prompt" id="dropzone-prompt">
+              <div style="font-size:2rem;margin-bottom:0.4rem;color:var(--accent-primary)">📷</div>
+              <div style="font-weight:600;color:var(--text-main);font-size:0.9rem">Kéo & thả ảnh vào đây, hoặc <span style="color:var(--accent-primary);text-decoration:underline;cursor:pointer" id="btn-browse-file">bấm để chọn tệp</span></div>
+              <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.2rem">Hỗ trợ PNG, JPG, JPEG, WEBP (Tự động tải lên máy chủ)</div>
+            </div>
+            <div class="dropzone-preview" id="dropzone-preview" style="display:none;align-items:center;gap:1rem;padding:0.5rem">
+              <img id="preview-img" src="" alt="Preview" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border-color);background:#020617" />
+              <div style="flex:1;min-width:0">
+                <div id="preview-filename" style="font-weight:600;font-size:0.85rem;color:var(--text-main);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+                <div id="preview-status" style="font-size:0.75rem;color:var(--success)">✅ Đã sẵn sàng</div>
+              </div>
+              <button type="button" class="btn btn-sm" id="btn-remove-image" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3)">✕ Xóa</button>
+            </div>
+          </div>
+          <input type="hidden" id="form-image-url" />
+        </div>
+
+        <div class="form-group">
+          <label>URL Datasheet (PDF)</label>
+          <input type="text" id="form-datasheet-url" class="form-input" placeholder="https://..." />
+        </div>
+
+
+        <!-- Dynamic Attributes -->
+        <div style="margin-bottom:1rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+            <label style="margin:0;font-size:0.85rem;font-weight:600;color:#e5e7eb">
+              Thông Số Kỹ Thuật (Product Attributes)
+            </label>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-add-attr">
+              <i class="bi bi-plus"></i> Thêm thông số
+            </button>
+          </div>
+          <div class="attrs-box" id="form-attributes-list">
+            <p style="color:var(--text-dim);font-size:0.85rem;text-align:center">Chưa có thông số nào. Nhấn "+ Thêm thông số" để bắt đầu.</p>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" style="padding:0.75rem;margin-top:0.5rem">
+          <i class="bi bi-floppy"></i> Lưu Connector
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Thêm từ Thư viện vào Kho -->
+<div class="modal-overlay" id="modal-add-from-lib">
+  <div class="modal-content" style="max-width:620px">
+    <div class="modal-header">
+      <h3 style="display:flex;align-items:center;gap:0.5rem">
+        <i class="bi bi-box-arrow-in-down" style="color:var(--accent-primary)"></i>
+        Thêm Connector từ Thư Viện Vào Kho
+      </h3>
+      <button class="modal-close" id="close-add-lib-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Search Input in Library -->
+      <div class="filter-group" style="margin-bottom:1rem">
+        <label class="filter-label">Tìm kiếm trong Thư viện</label>
+        <div style="position:relative">
+          <i class="bi bi-search" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--text-dim)"></i>
+          <input type="text" id="lib-picker-search" class="filter-select" placeholder="Gõ mã MPN, DigiKey P/N, hoặc hãng..." style="padding-left:2.4rem;width:100%" autocomplete="off" />
+        </div>
+      </div>
+
+      <!-- Search Results Dropdown List -->
+      <div id="lib-picker-results" style="max-height:200px;overflow-y:auto;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-card);margin-bottom:1.25rem;display:none">
+        <!-- populated by js -->
+      </div>
+
+      <!-- Selected Item Card -->
+      <div id="lib-picker-selected" style="display:none;padding:1rem;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius-md);margin-bottom:1.25rem">
+        <div style="display:flex;gap:0.85rem;align-items:center">
+          <div id="picker-item-img" style="width:48px;height:48px;border-radius:6px;overflow:hidden;background:#020617;display:flex;align-items:center;justify-content:center;flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div id="picker-item-mpn" style="font-weight:700;color:#fff;font-size:1rem"></div>
+            <div id="picker-item-desc" style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+            <div id="picker-item-alert" style="font-size:0.78rem;margin-top:0.25rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stock-in form -->
+      <form id="form-stock-in-from-lib">
+        <input type="hidden" id="picker-selected-id" />
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div class="filter-group">
+            <label class="filter-label">Số lượng nhập kho *</label>
+            <input type="number" id="picker-stock-qty" class="filter-select" min="1" value="10" required />
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Ngưỡng cảnh báo</label>
+            <input type="number" id="picker-min-alert" class="filter-select" min="0" value="5" required />
+          </div>
+        </div>
+
+        <div class="filter-group" style="margin-bottom:1.25rem">
+          <label class="filter-label">Vị trí lưu kho (Location) *</label>
+          <input type="text" id="picker-location" class="filter-select" placeholder="VD: Kệ A1-02, Hộp B-04..." value="Kệ A1" required />
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:0.75rem">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-picker">Hủy</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-picker" disabled>
+            <i class="bi bi-box-arrow-in-down"></i> Xác Nhận Nhập Kho
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/admin-connector.js"></script>
+</body>
+</html>

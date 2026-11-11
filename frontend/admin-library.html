@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thư Viện Connector (Master Library) - Connector Inventory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/base.css?v=2.2">
+  <link rel="stylesheet" href="/css/layout.css?v=2.2">
+  <link rel="stylesheet" href="/css/components.css?v=2.2">
+  <style>
+    .top-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+      flex: 1;
+    }
+
+    .btn-group-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .badge-in-wh {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .badge-not-in-wh {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text-muted);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(59, 130, 246, 0.2);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <a href="/" class="brand-logo">
+        <div class="logo-icon"><img src="/assets/logo.svg" alt="Connector Logo"
+            onerror="this.outerHTML='<i class=\'bi bi-plug-fill\'></i>'" /></div>
+        <span>Connector</span>
+        <span class="brand-badge">Master Library</span>
+      </a>
+      <div style="display:flex;gap:0.75rem;align-items:center">
+        <a href="/" class="btn btn-secondary btn-sm"><i class="bi bi-house"></i> Catalog</a>
+        <a href="/admin-library" class="btn btn-primary btn-sm"><i class="bi bi-collection"></i> Thư viện</a>
+        <a href="/admin-manage" class="btn btn-secondary btn-sm"><i class="bi bi-gear"></i> Quản lý Kho</a>
+        <a href="/admin-approval" class="btn btn-secondary btn-sm"><i class="bi bi-clipboard-check"></i> Duyệt Yêu
+          Cầu</a>
+        <a href="/admin-users" class="btn btn-secondary btn-sm"><i class="bi bi-people"></i> Người Dùng</a>
+      </div>
+      <div class="nav-actions">
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="Đổi chế độ Sáng / Tối"
+          style="padding:0.35rem 0.65rem;border-radius:var(--radius-full);display:flex;align-items:center;gap:0.35rem">
+          <i class="bi bi-sun-fill" id="theme-icon"></i>
+        </button>
+
+        <div id="nav-login-section" style="display:flex;gap:0.5rem">
+          <button class="btn btn-outline btn-sm" id="open-login-btn"><i class="bi bi-person"></i> Đăng nhập</button>
+        </div>
+        <div id="nav-user-section" class="user-profile-badge" style="display:none">
+          <div class="user-avatar" id="user-avatar">A</div>
+          <div class="user-info">
+            <span class="name" id="user-fullname">Admin</span>
+            <span class="role-tag" id="user-role-tag">Admin</span>
+          </div>
+          <button id="logout-btn" class="btn btn-sm"
+            style="background:transparent;color:var(--text-dim);font-size:0.9rem;padding:0.2rem 0.4rem"
+            title="Đăng xuất">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="app-container">
+    <!-- Header Title -->
+    <div style="margin-bottom:1.5rem">
+      <h1 style="font-size:1.75rem;display:flex;align-items:center;gap:0.75rem">
+        <i class="bi bi-collection-fill" style="color:var(--accent-primary)"></i>
+        Thư Viện Connector (Master Library)
+      </h1>
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.35rem">
+        Danh mục toàn bộ linh kiện chuẩn. Quản lý thông số, hình ảnh, nhập hàng loạt qua Excel và chọn linh kiện để nhập
+        vào kho thực tế.
+      </p>
+    </div>
+
+    <!-- KPI Stats Bar -->
+    <div class="stats-bar" style="margin-bottom:1.75rem">
+      <div class="stat-card border-blue">
+        <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#60a5fa"><i class="bi bi-collection"></i>
+        </div>
+        <div>
+          <div class="stat-val" id="stat-total-lib">0</div>
+          <div class="stat-label">Tổng linh kiện Thư viện</div>
+        </div>
+      </div>
+      <div class="stat-card border-green">
+        <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#34d399"><i
+            class="bi bi-check2-circle"></i></div>
+        <div>
+          <div class="stat-val" id="stat-in-wh">0</div>
+          <div class="stat-label">Đã có trong Kho hàng</div>
+        </div>
+      </div>
+      <div class="stat-card border-orange">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24"><i
+            class="bi bi-box-arrow-in-down"></i></div>
+        <div>
+          <div class="stat-val" id="stat-not-in-wh">0</div>
+          <div class="stat-label">Chưa nhập vào Kho</div>
+        </div>
+      </div>
+      <div class="stat-card border-red">
+        <div class="stat-icon" style="background:rgba(168,85,247,0.15);color:#c084fc"><i class="bi bi-buildings"></i>
+        </div>
+        <div>
+          <div class="stat-val" id="stat-mfrs">0</div>
+          <div class="stat-label">Nhà sản xuất</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="top-controls">
+      <div class="filter-bar">
+        <div style="position:relative;flex:1;min-width:240px">
+          <i class="bi bi-search"
+            style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:var(--text-dim)"></i>
+          <input type="text" id="lib-search" class="filter-select" placeholder="Tìm theo MPN, DigiKey P/N, mô tả..."
+            style="padding-left:2.5rem;width:100%" />
+        </div>
+        <select id="lib-filter-cat" class="filter-select" style="min-width:180px">
+          <option value="">Tất cả danh mục</option>
+        </select>
+        <select id="lib-filter-mfr" class="filter-select" style="min-width:160px">
+          <option value="">Tất cả nhà sản xuất</option>
+        </select>
+      </div>
+
+      <div class="btn-group-actions">
+        <button class="btn btn-secondary btn-sm" id="btn-download-template" title="Tải file Excel mẫu">
+          <i class="bi bi-file-earmark-arrow-down"></i> Tải File Mẫu
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btn-open-excel-modal" style="border-color:rgba(59,130,246,0.4)">
+          <i class="bi bi-file-earmark-excel" style="color:#34d399"></i> Nhập Excel Hàng Loạt
+        </button>
+        <button class="btn btn-primary btn-sm" id="btn-open-create-modal">
+          <i class="bi bi-plus-lg"></i> + Thêm Linh Kiện
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="table-container card">
+      <div id="table-spinner" style="display:none;padding:3rem;text-align:center">
+        <div class="spinner"></div>
+        <p style="margin-top:0.75rem;color:var(--text-muted);font-size:0.85rem">Đang tải danh sách thư viện...</p>
+      </div>
+
+      <table class="data-table" id="lib-table">
+        <thead>
+          <tr>
+            <th style="width:60px">Ảnh</th>
+            <th>Mã Linh Kiện (MPN)</th>
+            <th>Hãng Sản Xuất</th>
+            <th>Danh Mục</th>
+            <th>Mô Tả Kỹ Thuật</th>
+            <th>Trạng Thái Kho</th>
+            <th style="text-align:right">Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody id="lib-table-body">
+          <!-- Rendered by admin-library.js -->
+        </tbody>
+      </table>
+
+      <div id="empty-state" style="display:none;padding:4rem;text-align:center;color:var(--text-muted)">
+        <i class="bi bi-inbox" style="font-size:2.5rem;color:var(--text-dim);display:block;margin-bottom:0.75rem"></i>
+        <p style="font-size:1rem;font-weight:600;color:var(--text-main)">Không tìm thấy linh kiện nào trong Thư viện</p>
+        <p style="font-size:0.85rem;margin-top:0.25rem">Hãy thử thay đổi từ khóa tìm kiếm hoặc nhấn nút "Nhập Excel Hàng
+          Loạt" để nạp dữ liệu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 1: NHẬP EXCEL HÀNG LOẠT ================= -->
+  <div class="modal-overlay" id="excel-modal">
+    <div class="modal-content" style="max-width:620px">
+      <div class="modal-header">
+        <h3 style="display:flex;align-items:center;gap:0.5rem">
+          <i class="bi bi-file-earmark-excel-fill" style="color:#10b981"></i>
+          Nhập Hàng Loạt Connector từ Excel / CSV
+        </h3>
+        <button class="modal-close" id="close-excel-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem">
+          Hệ thống tự động kiểm tra: Nếu mã MPN chưa có sẽ thêm mới; nếu đã có sẽ cập nhật thông số mới nhất. Hỗ trợ
+          định dạng <code>.xlsx</code> hoặc <code>.csv</code>.
+        </p>
+
+        <!-- Drag & Drop Zone for Excel -->
+        <div class="image-dropzone" id="excel-dropzone" style="min-height:160px;margin-bottom:1.25rem">
+          <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" style="display:none" />
+          <div id="excel-drop-prompt">
+            <i class="bi bi-cloud-arrow-up" style="font-size:2.8rem;color:var(--accent-primary)"></i>
+            <p style="font-weight:600;margin:0.5rem 0 0.25rem">Kéo & thả tệp Excel/CSV vào đây</p>
+            <span style="font-size:0.8rem;color:var(--text-dim)">hoặc bấm để chọn tệp từ máy tính</span>
+          </div>
+          <div id="excel-file-info" style="display:none;text-align:center">
+            <i class="bi bi-file-earmark-spreadsheet" style="font-size:2.5rem;color:#34d399"></i>
+            <div id="excel-file-name" style="font-weight:600;margin-top:0.5rem;color:var(--text-main)">filename.xlsx
+            </div>
+            <span id="excel-file-size" style="font-size:0.78rem;color:var(--text-dim)">15 KB</span>
+            <div style="margin-top:0.75rem">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-change-excel">Đổi tệp</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Import Progress / Result Box -->
+        <div id="excel-result-box"
+          style="display:none;padding:1rem;border-radius:var(--radius-md);background:var(--bg-card);border:1px solid var(--border-color);margin-bottom:1rem">
+          <div id="excel-result-summary" style="font-weight:600;font-size:0.9rem"></div>
+          <div id="excel-result-errors"
+            style="margin-top:0.5rem;font-size:0.8rem;color:#f87171;max-height:140px;overflow-y:auto"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem">
+          <a href="/api/library/template" download class="btn btn-secondary btn-sm">
+            <i class="bi bi-download"></i> Tải File Mẫu
+          </a>
+          <div style="display:flex;gap:0.75rem">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-excel">Đóng</button>
+            <button type="button" class="btn btn-primary" id="btn-submit-excel" disabled>
+              <i class="bi bi-upload"></i> Bắt Đầu Nhập
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 2: THÊM / SỬA CONNECTOR THƯ VIỆN ================= -->
+  <div class="modal-overlay" id="library-modal">
+    <div class="modal-content" style="max-width:720px">
+      <div class="modal-header">
+        <h3 id="library-modal-title">Thêm Connector Vào Thư Viện</h3>
+        <button class="modal-close" id="close-lib-modal">&times;</button>
+      </div>
+      <form id="library-form">
+        <div class="modal-body">
+          <input type="hidden" id="lib-form-id" />
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div class="filter-group">
+              <label class="filter-label">Mã Linh Kiện (MPN) *</label>
+              <input type="text" id="lib-form-mpn" class="filter-select" placeholder="VD: DT04-4P" required />
+            </div>
+            <div class="filter-group">
+              <label class="filter-label">Mã DigiKey P/N</label>
+              <input type="text" id="lib-form-digikey" class="filter-select" placeholder="VD: 1734-DT04-4P-ND" />
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div class="filter-group">
+              <label class="filter-label">Nhà sản xuất (Manufacturer) *</label>
+              <input type="text" id="lib-form-mfr" class="filter-select" placeholder="VD: TE Connectivity, Molex..."
+                required />
+            </div>
+            <div class="filter-group">
+              <label class="filter-label">Danh mục (Category)</label>
+              <select id="lib-form-cat" class="filter-select">
+                <option value="">-- Chọn danh mục --</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="filter-group" style="margin-bottom:1rem">
+            <label class="filter-label">Mô tả tóm tắt *</label>
+            <input type="text" id="lib-form-desc" class="filter-select"
+              placeholder="VD: Receptacle housing 4 positions IP68" required />
+          </div>
+
+          <div class="filter-group" style="margin-bottom:1rem">
+            <label class="filter-label">Thông số kỹ thuật chi tiết</label>
+            <textarea id="lib-form-detail" class="filter-select" rows="2"
+              placeholder="VD: Series DT, Pitch 5.46mm, 13A max current, Wedgelock W4P..."></textarea>
+          </div>
+
+          <!-- Drag & Drop Image -->
+          <div class="filter-group" style="margin-bottom:1rem">
+            <label class="filter-label">Hình ảnh Connector (Kéo thả hoặc chọn tệp)</label>
+            <div class="image-dropzone" id="lib-image-dropzone">
+              <input type="file" id="lib-image-file-input" accept="image/png,image/jpeg,image/webp,image/gif"
+                style="display:none" />
+              <div id="lib-drop-prompt">
+                <i class="bi bi-image" style="font-size:2.2rem;color:var(--text-dim)"></i>
+                <p style="font-weight:600;margin:0.35rem 0 0.15rem;font-size:0.85rem">Kéo & thả ảnh thực tế vào đây</p>
+                <span style="font-size:0.75rem;color:var(--text-dim)">hoặc bấm để duyệt ảnh từ máy tính</span>
+              </div>
+              <div id="lib-drop-preview" style="display:none;position:relative">
+                <img id="lib-preview-img" src="" alt="Preview"
+                  style="max-height:120px;border-radius:var(--radius-sm);object-fit:contain" />
+                <div style="margin-top:0.4rem;display:flex;gap:0.5rem;justify-content:center">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-change-lib-img">Đổi ảnh</button>
+                  <button type="button" class="btn btn-danger btn-sm" id="btn-remove-lib-img">Xóa</button>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" id="lib-form-image-url" />
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="filter-group">
+              <label class="filter-label">Đường dẫn Datasheet (PDF URL)</label>
+              <input type="url" id="lib-form-datasheet" class="filter-select" placeholder="https://..." />
+            </div>
+            <div class="filter-group">
+              <label class="filter-label">Thời gian đặt hàng (Lead time)</label>
+              <input type="text" id="lib-form-lead" class="filter-select" value="Immediate / In Stock" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:1rem 1.5rem;display:flex;justify-content:flex-end;gap:0.75rem">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-lib">Hủy</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-lib">Lưu Vào Thư Viện</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 3: NHẬP VÀO KHO TỪ THƯ VIỆN ================= -->
+  <div class="modal-overlay" id="stock-in-modal">
+    <div class="modal-content" style="max-width:520px">
+      <div class="modal-header">
+        <h3 style="display:flex;align-items:center;gap:0.5rem">
+          <i class="bi bi-box-arrow-in-down" style="color:var(--accent-primary)"></i>
+          Nhập Linh Kiện Vào Kho Hàng
+        </h3>
+        <button class="modal-close" id="close-stock-modal">&times;</button>
+      </div>
+      <form id="stock-in-form">
+        <div class="modal-body">
+          <input type="hidden" id="stock-lib-id" />
+
+          <!-- Selected Item Card -->
+          <div
+            style="display:flex;gap:1rem;align-items:center;padding:1rem;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);margin-bottom:1.25rem">
+            <div id="stock-item-img"
+              style="width:56px;height:56px;border-radius:var(--radius-sm);overflow:hidden;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <!-- image -->
+            </div>
+            <div style="overflow:hidden">
+              <div id="stock-item-mpn" style="font-weight:700;font-size:1.05rem;color:var(--text-main)"></div>
+              <div id="stock-item-mfr" style="font-size:0.8rem;color:var(--text-muted)"></div>
+              <div id="stock-item-status-alert" style="margin-top:0.35rem;font-size:0.78rem"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div class="filter-group">
+              <label class="filter-label">Số lượng nhập vào kho *</label>
+              <input type="number" id="stock-qty" class="filter-select" min="1" value="10" required />
+            </div>
+            <div class="filter-group">
+              <label class="filter-label">Ngưỡng cảnh báo tối thiểu</label>
+              <input type="number" id="stock-min" class="filter-select" min="0" value="5" required />
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Vị trí ngăn/kệ lưu trữ (Location) *</label>
+            <input type="text" id="stock-location" class="filter-select" placeholder="VD: Kệ A1-02, Hộp B-05..."
+              value="Kệ A1" required />
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:1rem 1.5rem;display:flex;justify-content:flex-end;gap:0.75rem">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-stock">Hủy</button>
+          <button type="submit" class="btn btn-primary" id="btn-confirm-stock">
+            <i class="bi bi-check-lg"></i> Xác Nhận Nhập Kho
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 4: ĐĂNG NHẬP / ĐĂNG KÝ ================= -->
+  <div class="modal-overlay" id="login-modal">
+    <div class="modal-content" style="max-width:440px">
+      <div class="modal-header" style="padding:1.25rem 1.5rem 0.5rem;align-items:center">
+        <div style="display:flex;gap:0.5rem;flex:1">
+          <button id="tab-login" type="button" class="btn btn-sm auth-tab active"
+            style="flex:1;padding:0.45rem;border-radius:8px">Đăng Nhập</button>
+          <button id="tab-register" type="button" class="btn btn-sm auth-tab"
+            style="flex:1;padding:0.45rem;border-radius:8px;background:transparent;color:var(--text-muted);border:1px solid var(--border-color)">Đăng
+            Ký</button>
+        </div>
+        <button class="modal-close" style="margin-left:0.75rem">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:1rem 1.5rem 1.5rem">
+        <form id="login-form">
+          <div class="filter-group">
+            <label class="filter-label">Tên đăng nhập</label>
+            <input type="text" id="login-username" class="filter-select" placeholder="admin / user" required
+              autocomplete="username" />
+          </div>
+          <div class="filter-group" style="margin-top:1rem">
+            <label class="filter-label">Mật khẩu</label>
+            <input type="password" id="login-password" class="filter-select" placeholder="admin123 / user123" required
+              autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top:1.25rem;padding:0.75rem">
+            Đăng nhập
+          </button>
+          <p style="text-align:center;color:var(--text-muted);font-size:0.82rem;margin-top:1.25rem">
+            Chưa có tài khoản? <a href="#" id="link-to-register"
+              style="color:var(--accent-primary);text-decoration:underline;font-weight:600">Đăng ký ngay</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/admin-library.js"></script>
+</body>
+
+</html>

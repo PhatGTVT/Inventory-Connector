@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Người Dùng & Tài Khoản - Connector Inventory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/base.css?v=2.2">
+  <link rel="stylesheet" href="/css/layout.css?v=2.2">
+  <link rel="stylesheet" href="/css/components.css?v=2.2">
+  <style>
+    .top-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .badge-role-admin {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .badge-role-user {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .badge-status-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .badge-status-locked {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .pwd-badge {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-main);
+    }
+    .btn-action-group {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-content">
+    <a href="/" class="brand-logo">
+      <div class="logo-icon"><img src="/assets/logo.svg" alt="Connector Logo" onerror="this.outerHTML='<i class=\'bi bi-plug-fill\'></i>'" /></div>
+      <span>Connector</span>
+      <span class="brand-badge">Admin</span>
+    </a>
+    <div style="display:flex;gap:0.75rem;align-items:center">
+      <a href="/" class="btn btn-secondary btn-sm"><i class="bi bi-house"></i> Catalog</a>
+      <a href="/admin-library" class="btn btn-secondary btn-sm"><i class="bi bi-collection"></i> Thư viện</a>
+      <a href="/admin-manage" class="btn btn-secondary btn-sm"><i class="bi bi-gear"></i> Quản lý Kho</a>
+      <a href="/admin-approval" class="btn btn-secondary btn-sm"><i class="bi bi-clipboard-check"></i> Duyệt Yêu Cầu</a>
+      <a href="/admin-users" class="btn btn-primary btn-sm"><i class="bi bi-people"></i> Người Dùng</a>
+    </div>
+    <div class="nav-actions">
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="Đổi chế độ Sáng / Tối" style="padding:0.35rem 0.65rem;border-radius:var(--radius-full);display:flex;align-items:center;gap:0.35rem">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+      </button>
+
+      <div id="nav-login-section" style="display:flex;gap:0.5rem">
+        <button class="btn btn-outline btn-sm" id="open-login-btn"><i class="bi bi-person"></i> Đăng nhập</button>
+      </div>
+      <div id="nav-user-section" class="user-profile-badge" style="display:none">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info">
+          <span class="name" id="user-fullname">Admin</span>
+          <span class="role-tag" id="user-role-tag">Admin</span>
+        </div>
+        <button id="logout-btn" class="btn btn-sm" style="background:transparent;color:var(--text-dim);font-size:0.9rem;padding:0.2rem 0.4rem" title="Đăng xuất">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="app-container">
+  <!-- Header Title -->
+  <div style="margin-bottom:1.5rem">
+    <h1 style="font-size:1.75rem;display:flex;align-items:center;gap:0.75rem">
+      <i class="bi bi-people-fill" style="color:var(--accent-primary)"></i>
+      Quản Lý Người Dùng & Tài Khoản
+    </h1>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.35rem">
+      Toàn quyền quản trị tài khoản nhân viên: phân quyền, đặt lại mật khẩu, khóa/kích hoạt, thêm mới và xóa tài khoản an toàn.
+    </p>
+  </div>
+
+  <!-- KPI Stats Bar -->
+  <div class="stats-bar" style="margin-bottom:1.75rem">
+    <div class="stat-card border-blue">
+      <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#60a5fa"><i class="bi bi-people"></i></div>
+      <div>
+        <div class="stat-val" id="stat-total-users">0</div>
+        <div class="stat-label">Tổng số tài khoản</div>
+      </div>
+    </div>
+    <div class="stat-card border-orange">
+      <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24"><i class="bi bi-shield-lock"></i></div>
+      <div>
+        <div class="stat-val" id="stat-admin-users">0</div>
+        <div class="stat-label">Quản trị viên (Admin)</div>
+      </div>
+    </div>
+    <div class="stat-card border-green">
+      <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#34d399"><i class="bi bi-person-check"></i></div>
+      <div>
+        <div class="stat-val" id="stat-normal-users">0</div>
+        <div class="stat-label">Kỹ sư / Nhân viên (User)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Bar -->
+  <div class="top-controls">
+    <div style="position:relative;flex:1;max-width:380px">
+      <i class="bi bi-search" style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:var(--text-dim)"></i>
+      <input type="text" id="user-search" class="filter-select" placeholder="Tìm theo tên, username, email, bộ phận..." style="padding-left:2.5rem;width:100%" />
+    </div>
+
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+      <button class="btn btn-primary" id="btn-open-create-modal">
+        <i class="bi bi-person-plus-fill"></i> + Thêm Người Dùng Mới
+      </button>
+      <a href="/api/auth/users/export-excel" download class="btn btn-secondary" id="btn-export-excel" style="background:rgba(16,185,129,0.15);color:#34d399;border-color:rgba(16,185,129,0.3)">
+        <i class="bi bi-file-earmark-excel"></i> Xuất File Excel
+      </a>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div class="table-container card">
+    <table class="data-table" id="users-table">
+      <thead>
+        <tr>
+          <th style="width:50px">STT</th>
+          <th>Tên Đăng Nhập</th>
+          <th>Họ Và Tên</th>
+          <th>Vai Trò</th>
+          <th>Trạng Thái</th>
+          <th>Email</th>
+          <th>Phòng Ban</th>
+          <th style="text-align:right;width:180px">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody id="users-table-body">
+        <tr>
+          <td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted)">
+            Đang tải danh sách người dùng...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ================= MODAL THÊM / SỬA NGƯỜI DÙNG ================= -->
+<div class="modal-overlay" id="user-form-modal">
+  <div class="modal-content" style="max-width:520px">
+    <div class="modal-header">
+      <h3 id="user-modal-title"><i class="bi bi-person-plus"></i> Thêm Người Dùng Mới</h3>
+      <button class="modal-close" id="close-user-modal">&times;</button>
+    </div>
+    <form id="user-form">
+      <div class="modal-body">
+        <input type="hidden" id="form-user-id" value="" />
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="filter-label">Tên đăng nhập (Username) *</label>
+          <input type="text" id="form-user-username" class="filter-select" placeholder="vd: engineer_01" required autocomplete="off" />
+        </div>
+
+        <div class="form-group" id="form-pwd-group" style="margin-bottom:1rem">
+          <label class="filter-label">Mật khẩu ban đầu *</label>
+          <input type="password" id="form-user-password" class="filter-select" placeholder="Ít nhất 4 ký tự" autocomplete="new-password" />
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="filter-label">Họ và tên đầy đủ *</label>
+          <input type="text" id="form-user-fullname" class="filter-select" placeholder="vd: Nguyễn Văn A" required />
+        </div>
+
+        <div class="form-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+          <div>
+            <label class="filter-label">Vai trò hệ thống</label>
+            <select id="form-user-role" class="filter-select">
+              <option value="user">👤 User (Kỹ sư / Nhân viên)</option>
+              <option value="admin">⚡ Admin (Quản trị viên)</option>
+            </select>
+          </div>
+          <div>
+            <label class="filter-label">Trạng thái hoạt động</label>
+            <select id="form-user-status" class="filter-select">
+              <option value="true">✅ Hoạt động (Active)</option>
+              <option value="false">🔒 Khóa (Locked)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="filter-label">Email liên hệ</label>
+          <input type="email" id="form-user-email" class="filter-select" placeholder="email@congty.com" />
+        </div>
+
+        <div class="form-group" style="margin-bottom:0.5rem">
+          <label class="filter-label">Phòng ban / Bộ phận</label>
+          <input type="text" id="form-user-dept" class="filter-select" placeholder="vd: Phòng Kỹ Thuật Điện Tử" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-user-modal">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-user"><i class="bi bi-check2"></i> Lưu Tài Khoản</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL RESET MẬT KHẨU ================= -->
+<div class="modal-overlay" id="reset-pwd-modal">
+  <div class="modal-content" style="max-width:440px">
+    <div class="modal-header">
+      <h3><i class="bi bi-key-fill" style="color:#fbbf24"></i> Đặt Lại Mật Khẩu</h3>
+      <button class="modal-close" id="close-reset-pwd-modal">&times;</button>
+    </div>
+    <form id="reset-pwd-form">
+      <div class="modal-body">
+        <input type="hidden" id="reset-user-id" />
+        <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1rem">
+          Đang đặt lại mật khẩu cho tài khoản: <strong style="color:var(--accent-primary)" id="reset-user-name">—</strong>
+        </p>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="filter-label">Mật khẩu mới *</label>
+          <input type="password" id="reset-new-pwd" class="filter-select" placeholder="Nhập mật khẩu mới..." required autocomplete="new-password" />
+        </div>
+
+        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius-md);padding:0.75rem 1rem">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.4rem">Hoặc chọn mật khẩu mặc định nhanh:</div>
+          <div style="display:flex;gap:0.5rem">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('reset-new-pwd').value='user123'">Gán 'user123'</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('reset-new-pwd').value='admin123'">Gán 'admin123'</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-reset-pwd">Hủy</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Xác Nhận Đổi</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL XÁC NHẬN XÓA TÀI KHOẢN AN TOÀN ================= -->
+<div class="modal-overlay" id="delete-user-modal">
+  <div class="modal-content" style="max-width:460px">
+    <div class="modal-header">
+      <h3 style="color:#ef4444"><i class="bi bi-exclamation-triangle-fill"></i> Xác Nhận Xóa Tài Khoản</h3>
+      <button class="modal-close" id="close-delete-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="delete-user-id" />
+      <p style="font-size:0.95rem;color:var(--text-main);margin-bottom:0.75rem">
+        Bạn có chắc chắn muốn xóa tài khoản <strong id="delete-username-label" style="color:#ef4444">—</strong>?
+      </p>
+      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-md);padding:0.85rem 1rem;font-size:0.83rem;color:var(--text-muted);line-height:1.5">
+        <strong>🛡️ Cơ chế bảo toàn kiểm toán kho:</strong><br />
+        - Nếu tài khoản chưa từng mượn/xuất kho: Sẽ được xóa vĩnh viễn khỏi Database.<br />
+        - Nếu tài khoản đã có lịch sử phiếu xuất kho: Hệ thống sẽ chuyển sang trạng thái <strong>"Khóa vĩnh viễn"</strong> để bảo toàn 100% dữ liệu lịch sử kiểm kê, ngăn chặn đăng nhập mà không gây lỗi dữ liệu.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="btn-cancel-delete">Hủy</button>
+      <button type="button" class="btn btn-danger" id="btn-confirm-delete"><i class="bi bi-trash-fill"></i> Đồng Ý Xóa</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  let allUsers = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!requireAdmin('/')) return;
+    await loadUsers();
+    bindEvents();
+  });
+
+  async function loadUsers() {
+    try {
+      allUsers = await api.getUsers();
+      updateUserStats(allUsers);
+      renderUsers(allUsers);
+    } catch (err) {
+      showToast(err.message || 'Lỗi tải danh sách người dùng', 'error');
+    }
+  }
+
+  function updateUserStats(users) {
+    const totalEl = document.getElementById('stat-total-users');
+    const adminEl = document.getElementById('stat-admin-users');
+    const userEl = document.getElementById('stat-normal-users');
+
+    const total = users.length;
+    const admins = users.filter(u => u.role === 'admin').length;
+    const normals = total - admins;
+
+    if (totalEl) totalEl.textContent = total;
+    if (adminEl) adminEl.textContent = admins;
+    if (userEl) userEl.textContent = normals;
+  }
+
+  function renderUsers(users) {
+    const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
+
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted)">Không tìm thấy người dùng nào phù hợp.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = users.map((u, idx) => {
+      const roleBadge = u.role === 'admin' 
+        ? `<span class="badge-role-admin">⚡ Admin</span>` 
+        : `<span class="badge-role-user">👤 User</span>`;
+
+      const statusBadge = (u.is_active !== false)
+        ? `<span class="badge-status-active"><i class="bi bi-check-circle-fill"></i> Hoạt động</span>`
+        : `<span class="badge-status-locked"><i class="bi bi-lock-fill"></i> Đã khóa</span>`;
+
+      return `
+        <tr>
+          <td style="text-align:center;color:var(--text-muted)">${idx + 1}</td>
+          <td>
+            <div style="font-weight:700;color:var(--accent-primary);font-family:var(--font-mono)">${u.username}</div>
+          </td>
+          <td><span style="font-weight:600;color:var(--text-main)">${u.full_name || '—'}</span></td>
+          <td>${roleBadge}</td>
+          <td>${statusBadge}</td>
+          <td style="color:var(--text-muted);font-size:0.85rem">${u.email || '—'}</td>
+          <td style="color:var(--text-muted);font-size:0.85rem">${u.department || '—'}</td>
+          <td>
+            <div class="btn-action-group">
+              <button class="btn btn-secondary btn-sm" onclick="openResetPasswordModal(${u.id})" title="Đặt lại mật khẩu">
+                <i class="bi bi-key"></i>
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="openEditUserModal(${u.id})" title="Chỉnh sửa thông tin">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleStatus(${u.id})" title="${u.is_active !== false ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}">
+                <i class="bi ${u.is_active !== false ? 'bi-lock' : 'bi-unlock-fill'}" style="color:${u.is_active !== false ? '#f87171' : '#34d399'}"></i>
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="openDeleteUserModal(${u.id})" title="Xóa tài khoản">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function bindEvents() {
+    // Search filter
+    document.getElementById('user-search')?.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtered = q ? allUsers.filter(u => 
+        (u.username && u.username.toLowerCase().includes(q)) ||
+        (u.full_name && u.full_name.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q)) ||
+        (u.department && u.department.toLowerCase().includes(q))
+      ) : allUsers;
+      renderUsers(filtered);
+    });
+
+    // Create modal
+    document.getElementById('btn-open-create-modal')?.addEventListener('click', () => {
+      document.getElementById('form-user-id').value = '';
+      document.getElementById('user-modal-title').innerHTML = '<i class="bi bi-person-plus"></i> Thêm Người Dùng Mới';
+      document.getElementById('form-user-username').value = '';
+      document.getElementById('form-user-username').disabled = false;
+      document.getElementById('form-pwd-group').style.display = 'block';
+      document.getElementById('form-user-password').required = true;
+      document.getElementById('form-user-password').value = '';
+      document.getElementById('form-user-fullname').value = '';
+      document.getElementById('form-user-email').value = '';
+      document.getElementById('form-user-dept').value = '';
+      document.getElementById('form-user-role').value = 'user';
+      document.getElementById('form-user-status').value = 'true';
+      document.getElementById('user-form-modal').classList.add('active');
+    });
+
+    document.getElementById('close-user-modal')?.addEventListener('click', () => {
+      document.getElementById('user-form-modal').classList.remove('active');
+    });
+    document.getElementById('btn-cancel-user-modal')?.addEventListener('click', () => {
+      document.getElementById('user-form-modal').classList.remove('active');
+    });
+
+    // Save User Form Submit
+    document.getElementById('user-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('form-user-id').value;
+      const btn = document.getElementById('btn-save-user');
+      btn.disabled = true;
+
+      try {
+        if (!id) {
+          // Create
+          const payload = {
+            username: document.getElementById('form-user-username').value.trim(),
+            password: document.getElementById('form-user-password').value,
+            full_name: document.getElementById('form-user-fullname').value.trim(),
+            email: document.getElementById('form-user-email').value.trim() || null,
+            department: document.getElementById('form-user-dept').value.trim() || null,
+            role: document.getElementById('form-user-role').value,
+            is_active: document.getElementById('form-user-status').value === 'true'
+          };
+          await api.createUser(payload);
+          showToast(`Đã tạo tài khoản '${payload.username}' thành công! 🎉`, 'success');
+        } else {
+          // Update
+          const payload = {
+            full_name: document.getElementById('form-user-fullname').value.trim(),
+            email: document.getElementById('form-user-email').value.trim() || null,
+            department: document.getElementById('form-user-dept').value.trim() || null,
+            role: document.getElementById('form-user-role').value,
+            is_active: document.getElementById('form-user-status').value === 'true'
+          };
+          await api.updateUser(id, payload);
+          showToast('Đã cập nhật thông tin người dùng thành công!', 'success');
+        }
+        document.getElementById('user-form-modal').classList.remove('active');
+        await loadUsers();
+      } catch (err) {
+        showToast(err.message || 'Lỗi thao tác tài khoản', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // Reset Password Form Submit
+    document.getElementById('reset-pwd-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('reset-user-id').value;
+      const newPwd = document.getElementById('reset-new-pwd').value;
+      try {
+        const res = await api.resetUserPassword(id, newPwd);
+        showToast(res.message || 'Đã đặt lại mật khẩu thành công!', 'success');
+        document.getElementById('reset-pwd-modal').classList.remove('active');
+      } catch (err) {
+        showToast(err.message || 'Lỗi đặt lại mật khẩu', 'error');
+      }
+    });
+
+    document.getElementById('close-reset-pwd-modal')?.addEventListener('click', () => {
+      document.getElementById('reset-pwd-modal').classList.remove('active');
+    });
+    document.getElementById('btn-cancel-reset-pwd')?.addEventListener('click', () => {
+      document.getElementById('reset-pwd-modal').classList.remove('active');
+    });
+
+    // Delete Modal Events
+    document.getElementById('close-delete-modal')?.addEventListener('click', () => {
+      document.getElementById('delete-user-modal').classList.remove('active');
+    });
+    document.getElementById('btn-cancel-delete')?.addEventListener('click', () => {
+      document.getElementById('delete-user-modal').classList.remove('active');
+    });
+
+    document.getElementById('btn-confirm-delete')?.addEventListener('click', async () => {
+      const id = document.getElementById('delete-user-id').value;
+      const btn = document.getElementById('btn-confirm-delete');
+      btn.disabled = true;
+      try {
+        const res = await api.deleteUser(id);
+        showToast(res.message, res.status === 'deleted' ? 'success' : 'info');
+        document.getElementById('delete-user-modal').classList.remove('active');
+        await loadUsers();
+      } catch (err) {
+        showToast(err.message || 'Lỗi xóa tài khoản', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // Action Triggers
+  function openEditUserModal(id) {
+    const u = allUsers.find(item => item.id === id);
+    if (!u) return;
+
+    document.getElementById('form-user-id').value = u.id;
+    document.getElementById('user-modal-title').innerHTML = `<i class="bi bi-pencil-square"></i> Chỉnh Sửa Tài Khoản: <span style="color:var(--accent-primary)">${u.username}</span>`;
+    document.getElementById('form-user-username').value = u.username;
+    document.getElementById('form-user-username').disabled = true;
+    document.getElementById('form-pwd-group').style.display = 'none';
+    document.getElementById('form-user-password').required = false;
+    document.getElementById('form-user-fullname').value = u.full_name || '';
+    document.getElementById('form-user-email').value = u.email || '';
+    document.getElementById('form-user-dept').value = u.department || '';
+    document.getElementById('form-user-role').value = u.role || 'user';
+    document.getElementById('form-user-status').value = u.is_active !== false ? 'true' : 'false';
+    document.getElementById('user-form-modal').classList.add('active');
+  }
+
+  function openResetPasswordModal(id) {
+    const u = allUsers.find(item => item.id === id);
+    if (!u) return;
+
+    document.getElementById('reset-user-id').value = u.id;
+    document.getElementById('reset-user-name').textContent = `${u.full_name} (@${u.username})`;
+    document.getElementById('reset-new-pwd').value = '';
+    document.getElementById('reset-pwd-modal').classList.add('active');
+  }
+
+  async function toggleStatus(id) {
+    const u = allUsers.find(item => item.id === id);
+    if (!u) return;
+    const actionName = u.is_active !== false ? 'Khóa' : 'Kích hoạt lại';
+    if (!confirm(`Bạn có chắc chắn muốn ${actionName} tài khoản '${u.username}'?`)) return;
+
+    try {
+      const updated = await api.toggleUserStatus(id);
+      showToast(`Đã ${updated.is_active ? 'kích hoạt' : 'khóa'} tài khoản '${updated.username}'!`, 'success');
+      await loadUsers();
+    } catch (err) {
+      showToast(err.message || 'Lỗi thay đổi trạng thái tài khoản', 'error');
+    }
+  }
+
+  function openDeleteUserModal(id) {
+    const u = allUsers.find(item => item.id === id);
+    if (!u) return;
+
+    document.getElementById('delete-user-id').value = u.id;
+    document.getElementById('delete-username-label').textContent = `${u.full_name} (@${u.username})`;
+    document.getElementById('delete-user-modal').classList.add('active');
+  }
+</script>
+</body>
+</html>
